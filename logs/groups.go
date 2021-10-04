@@ -18,6 +18,13 @@ func GetLogGroups(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, filte
 
 	for {
 
+		select {
+		case <-ctx.Done():
+			return groups, nil
+		default:
+			// pass
+		}
+
 		opts := &cloudwatchlogs.DescribeLogGroupsInput{
 			// LogGroupName: aws.String(log_group),
 		}

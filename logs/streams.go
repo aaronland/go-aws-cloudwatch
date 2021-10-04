@@ -49,6 +49,13 @@ func GetLogGroupStreams(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs,
 
 	for {
 
+		select {
+		case <-ctx.Done():
+			return streams, nil
+		default:
+			// pass
+		}
+
 		opts := &cloudwatchlogs.DescribeLogStreamsInput{
 			LogGroupName: aws.String(log_group),
 		}
