@@ -1,12 +1,9 @@
-package cloudwatch
+package logs
 
 import (
 	"context"
-	"github.com/aaronland/go-aws-session"
 	"github.com/aws/aws-sdk-go/aws"
-	aws_session "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	_ "log"
 )
 
 type GetLogEventsOptions struct {
@@ -16,24 +13,7 @@ type GetLogEventsOptions struct {
 	LogEventChannel chan *cloudwatchlogs.OutputLogEvent
 }
 
-func GetLogEventsWithDSN(ctx context.Context, dsn string, opts *GetLogEventsOptions) error {
-
-	sess, err := session.NewSessionWithDSN(dsn)
-
-	if err != nil {
-		return err
-	}
-
-	return GetLogEventsWithSession(ctx, sess, opts)
-}
-
-func GetLogEventsWithSession(ctx context.Context, sess *aws_session.Session, opts *GetLogEventsOptions) error {
-
-	svc := cloudwatchlogs.New(sess)
-	return GetLogEventsWithService(ctx, svc, opts)
-}
-
-func GetLogEventsAsListWithService(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, opts *GetLogEventsOptions) ([]*cloudwatchlogs.OutputLogEvent, error) {
+func GetLogEventsAsList(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, opts *GetLogEventsOptions) ([]*cloudwatchlogs.OutputLogEvent, error) {
 
 	events := make([]*cloudwatchlogs.OutputLogEvent, 0)
 	events_ch := make(chan *cloudwatchlogs.OutputLogEvent)
@@ -60,7 +40,7 @@ func GetLogEventsAsListWithService(ctx context.Context, svc *cloudwatchlogs.Clou
 
 	opts.LogEventChannel = events_ch
 
-	err := GetLogEventsWithService(ctx, svc, opts)
+	err := GetLogEvents(ctx, svc, opts)
 
 	if err != nil {
 		return nil, err
@@ -69,7 +49,7 @@ func GetLogEventsAsListWithService(ctx context.Context, svc *cloudwatchlogs.Clou
 	return events, nil
 }
 
-func GetLogEventsWithService(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, opts *GetLogEventsOptions) error {
+func GetLogEvents(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, opts *GetLogEventsOptions) error {
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -99,6 +79,10 @@ func GetLogEventsWithService(ctx context.Context, svc *cloudwatchlogs.CloudWatch
 
 		if err != nil {
 			return err
+		}
+
+		if len(rsp.Events) == 0 {
+			break
 		}
 
 		for _, e := range rsp.Events {
