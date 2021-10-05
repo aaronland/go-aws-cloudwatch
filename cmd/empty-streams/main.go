@@ -17,6 +17,7 @@ func main() {
 
 	cloudwatch_dsn := flag.String("cloudwatch-dsn", "region=us-west-2 credentials=session", "...")
 	prune := flag.Bool("prune", false, "...")
+	dryrun := flag.Bool("dryrun", false, "...")
 
 	max_workers := flag.Int("max-workers", 100, "...")
 
@@ -75,6 +76,22 @@ func main() {
 
 			if *prune {
 
+				events_opts := &logs.GetLogEventsOptions{
+					LogGroupName:  *g.LogGroupName,
+					LogStreamName: *s.LogStreamName,
+				}
+
+				events, err := logs.GetLogEventsAsList(ctx, cloudwatch_svc, events_opts)
+
+				if err != nil {
+					log.Fatalf("Failed to get events for %s (%s), %v", *g.LogGroupName, *s.LogStreamName, err)
+				}
+
+				if len(events) > 0 {
+					log.Printf("%s (%s) has events (%d) even though stored bytes is 0\n", *g.LogGroupName, *s.LogStreamName, len(events))
+					continue
+				}
+
 				wg.Add(1)
 
 				go func(g *cloudwatchlogs.LogGroup, s *cloudwatchlogs.LogStream) {
@@ -88,6 +105,10 @@ func main() {
 					<-limiter
 
 					n := fmt.Sprintf("%s#%s\n", *g.LogGroupName, *s.LogStreamName)
+
+					if *dryrun {
+						log.Printf("Prune %s (dryrun)\n", n)
+					}
 
 					err := pruneStream(ctx, cloudwatch_svc, g, s)
 
