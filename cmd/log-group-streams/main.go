@@ -1,3 +1,4 @@
+// log-group-streams will emit the names of all the log streams in a given CloudWatch log group to STDOUT.
 package main
 
 import (
@@ -10,8 +11,8 @@ import (
 
 func main() {
 
-	cloudwatch_dsn := flag.String("cloudwatch-dsn", "region=us-west-2 credentials=session", "...")
-	cloudwatch_loggroup := flag.String("cloudwatch-loggroup", "", "...")
+	cloudwatch_dsn := flag.String("cloudwatch-dsn", "", "A valid aaronland/go-aws-session DSN string.")
+	cloudwatch_loggroup := flag.String("log-group", "", "A valid CloudWatch log group name.")
 
 	flag.Parse()
 

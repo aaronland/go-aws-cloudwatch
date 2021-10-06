@@ -2,4 +2,8 @@
 
 ## Important
 
-Work in progress.
+Work in progress. Documentation is incomplete.
+
+## See also
+
+* https://github.com/aaronland/go-aws-session

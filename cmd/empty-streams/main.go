@@ -1,5 +1,5 @@
 // empty-streams will list all the CloudWatch log streams with 0 stored bytes and optionally
-// remove them. IMPORTANT: It is not clear to me that this tool is working as expected yet...
+// remove them.
 package main
 
 import (
@@ -15,11 +15,11 @@ import (
 
 func main() {
 
-	cloudwatch_dsn := flag.String("cloudwatch-dsn", "region=us-west-2 credentials=session", "...")
-	prune := flag.Bool("prune", false, "...")
-	dryrun := flag.Bool("dryrun", false, "...")
+	cloudwatch_dsn := flag.String("cloudwatch-dsn", "", "A valid aaronland/go-aws-session DSN string.")
+	prune := flag.Bool("prune", false, "Remove log streams with no events.")
+	dryrun := flag.Bool("dryrun", false, "Go through the motions but don't actually remove any log streams.")
 
-	max_workers := flag.Int("max-workers", 100, "...")
+	max_workers := flag.Int("max-workers", 100, "The maximum number of concurrent workers.")
 
 	flag.Parse()
 

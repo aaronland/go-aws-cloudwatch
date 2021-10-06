@@ -1,3 +1,4 @@
+// log-groups will emit the names of all the CloudWatch log groups for a given AWS account to STDOUT.
 package main
 
 import (
@@ -10,9 +11,7 @@ import (
 
 func main() {
 
-	cloudwatch_dsn := flag.String("cloudwatch-dsn", "region=us-west-2 credentials=session", "...")
-
-	// prefix := flag.String("prefix", "", "...")
+	cloudwatch_dsn := flag.String("cloudwatch-dsn", "", "A valid aaronland/go-aws-session DSN string.")
 
 	flag.Parse()
 
