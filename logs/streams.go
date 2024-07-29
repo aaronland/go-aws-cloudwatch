@@ -21,6 +21,16 @@ func LogsStreamsWithBytes(ctx context.Context, s *types.LogStream) (bool, error)
 	return true, nil
 }
 
+func LogStreamsSinceFunc(ctx context.Context, ts int64) FilterLogStreamFunc {
+
+	fn := func(ctx context.Context, s *types.LogStream) (bool, error) {
+
+		return *s.LastEventTimestamp >= ts, nil
+	}
+
+	return fn
+}
+
 func GetMostRecentStreamForLogGroup(ctx context.Context, cl *cloudwatchlogs.Client, log_group string) (*types.LogStream, error) {
 
 	filters := []FilterLogStreamFunc{
