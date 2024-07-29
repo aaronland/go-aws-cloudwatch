@@ -11,9 +11,9 @@ import (
 
 type FilterLogGroupFunc func(context.Context, *types.LogGroup) (bool, error)
 
-func GetLogGroups(ctx context.Context, svc *cloudwatchlogs.Client, filters ...FilterLogGroupFunc) ([]*types.LogGroup, error) {
+func GetLogGroups(ctx context.Context, cl *cloudwatchlogs.Client, filters ...FilterLogGroupFunc) ([]*types.LogGroup, error) {
 
-	groups := make([]*cloudwatchlogs.LogGroup, 0)
+	groups := make([]*types.LogGroup, 0)
 
 	cursor := ""
 
@@ -34,7 +34,7 @@ func GetLogGroups(ctx context.Context, svc *cloudwatchlogs.Client, filters ...Fi
 			opts.NextToken = aws.String(cursor)
 		}
 
-		rsp, err := svc.DescribeLogGroups(opts)
+		rsp, err := cl.DescribeLogGroups(ctx, opts)
 
 		if err != nil {
 			return nil, fmt.Errorf("Failed to describe groups, %w", err)
@@ -46,7 +46,7 @@ func GetLogGroups(ctx context.Context, svc *cloudwatchlogs.Client, filters ...Fi
 
 			for _, f := range filters {
 
-				ok, err := f(ctx, s)
+				ok, err := f(ctx, &s)
 
 				if err != nil {
 					return nil, fmt.Errorf("Filter func for %s failed, %w", *s.LogGroupName, err)
@@ -62,7 +62,7 @@ func GetLogGroups(ctx context.Context, svc *cloudwatchlogs.Client, filters ...Fi
 				continue
 			}
 
-			groups = append(groups, s)
+			groups = append(groups, &s)
 		}
 
 		if rsp.NextToken == nil {

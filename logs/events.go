@@ -15,7 +15,7 @@ type GetLogEventsOptions struct {
 	LogEventChannel chan *types.OutputLogEvent
 }
 
-func GetLogEventsAsList(ctx context.Context, svc *cloudwatchlogs.Client, opts *GetLogEventsOptions) ([]*types.OutputLogEvent, error) {
+func GetLogEventsAsList(ctx context.Context, cl *cloudwatchlogs.Client, opts *GetLogEventsOptions) ([]*types.OutputLogEvent, error) {
 
 	events := make([]*types.OutputLogEvent, 0)
 	events_ch := make(chan *types.OutputLogEvent)
@@ -42,7 +42,7 @@ func GetLogEventsAsList(ctx context.Context, svc *cloudwatchlogs.Client, opts *G
 
 	opts.LogEventChannel = events_ch
 
-	err := GetLogEvents(ctx, svc, opts)
+	err := GetLogEvents(ctx, cl, opts)
 
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func GetLogEventsAsList(ctx context.Context, svc *cloudwatchlogs.Client, opts *G
 	return events, nil
 }
 
-func GetLogEvents(ctx context.Context, svc *cloudwatchlogs.Client, opts *GetLogEventsOptions) error {
+func GetLogEvents(ctx context.Context, cl *cloudwatchlogs.Client, opts *GetLogEventsOptions) error {
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -77,7 +77,7 @@ func GetLogEvents(ctx context.Context, svc *cloudwatchlogs.Client, opts *GetLogE
 			req.NextToken = aws.String(cursor)
 		}
 
-		rsp, err := svc.GetLogEvents(req)
+		rsp, err := cl.GetLogEvents(ctx, req)
 
 		if err != nil {
 			return err
@@ -88,7 +88,7 @@ func GetLogEvents(ctx context.Context, svc *cloudwatchlogs.Client, opts *GetLogE
 		}
 
 		for _, e := range rsp.Events {
-			opts.LogEventChannel <- e
+			opts.LogEventChannel <- &e
 		}
 
 		// sigh... (20190213/thisisaaronland)

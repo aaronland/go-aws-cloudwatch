@@ -8,7 +8,8 @@ import (
 	"log"
 
 	"github.com/aaronland/go-aws-cloudwatch/logs"
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	_ "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
 func main() {
@@ -28,7 +29,7 @@ func main() {
 		log.Fatalf("Failed to create service, %v", err)
 	}
 
-	event_ch := make(chan *cloudwatchlogs.OutputLogEvent)
+	event_ch := make(chan *types.OutputLogEvent)
 
 	go func() {
 

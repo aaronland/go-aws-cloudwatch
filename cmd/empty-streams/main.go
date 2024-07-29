@@ -12,6 +12,7 @@ import (
 
 	"github.com/aaronland/go-aws-cloudwatch/logs"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
 func main() {
@@ -38,19 +39,19 @@ func main() {
 
 	limiter := time.Tick(200 * time.Millisecond)
 
-	cloudwatch_svc, err := logs.NewClient(ctx, *cloudwatch_uri)
+	cloudwatch_cl, err := logs.NewClient(ctx, *cloudwatch_uri)
 
 	if err != nil {
 		log.Fatalf("Failed to create service, %v", err)
 	}
 
-	groups, err := logs.GetLogGroups(ctx, cloudwatch_svc)
+	groups, err := logs.GetLogGroups(ctx, cloudwatch_cl)
 
 	if err != nil {
 		log.Fatalf("Failed to get log groups, %v", err)
 	}
 
-	stream_filter := func(ctx context.Context, s *cloudwatchlogs.LogStream) (bool, error) {
+	stream_filter := func(ctx context.Context, s *types.LogStream) (bool, error) {
 
 		if *s.StoredBytes == 0 {
 			return true, nil
@@ -65,7 +66,7 @@ func main() {
 
 		fmt.Println(*g.LogGroupName)
 
-		streams, err := logs.GetLogGroupStreams(ctx, cloudwatch_svc, *g.LogGroupName, stream_filter)
+		streams, err := logs.GetLogGroupStreams(ctx, cloudwatch_cl, *g.LogGroupName, stream_filter)
 
 		if err != nil {
 			log.Fatalf("Failed to get log streams for %s, %v", *g.LogGroupName, err)
@@ -83,7 +84,7 @@ func main() {
 					LogStreamName: *s.LogStreamName,
 				}
 
-				events, err := logs.GetLogEventsAsList(ctx, cloudwatch_svc, events_opts)
+				events, err := logs.GetLogEventsAsList(ctx, cloudwatch_cl, events_opts)
 
 				if err != nil {
 					log.Fatalf("Failed to get events for %s (%s), %v", *g.LogGroupName, *s.LogStreamName, err)
@@ -96,7 +97,7 @@ func main() {
 
 				wg.Add(1)
 
-				go func(g *cloudwatchlogs.LogGroup, s *cloudwatchlogs.LogStream) {
+				go func(g *types.LogGroup, s *types.LogStream) {
 
 					defer func() {
 						throttle <- true
@@ -112,7 +113,7 @@ func main() {
 						log.Printf("Prune %s (dryrun)\n", n)
 					}
 
-					err := pruneStream(ctx, cloudwatch_svc, g, s)
+					err := pruneStream(ctx, cloudwatch_cl, g, s)
 
 					if err != nil {
 						log.Println("Failed to remove %s (%s), %v", n, err)
@@ -128,13 +129,13 @@ func main() {
 	wg.Wait()
 }
 
-func pruneStream(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, g *cloudwatchlogs.LogGroup, s *cloudwatchlogs.LogStream) error {
+func pruneStream(ctx context.Context, cl *cloudwatchlogs.Client, g *types.LogGroup, s *types.LogStream) error {
 
 	opts := &cloudwatchlogs.DeleteLogStreamInput{
 		LogGroupName:  g.LogGroupName,
 		LogStreamName: s.LogStreamName,
 	}
 
-	_, err := svc.DeleteLogStream(opts)
+	_, err := cl.DeleteLogStream(ctx, opts)
 	return err
 }
