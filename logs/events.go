@@ -2,8 +2,9 @@ package logs
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 )
 
 type GetLogEventsOptions struct {
@@ -13,7 +14,7 @@ type GetLogEventsOptions struct {
 	LogEventChannel chan *cloudwatchlogs.OutputLogEvent
 }
 
-func GetLogEventsAsList(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, opts *GetLogEventsOptions) ([]*cloudwatchlogs.OutputLogEvent, error) {
+func GetLogEventsAsList(ctx context.Context, svc *cloudwatchlogs.Client, opts *GetLogEventsOptions) ([]*cloudwatchlogs.OutputLogEvent, error) {
 
 	events := make([]*cloudwatchlogs.OutputLogEvent, 0)
 	events_ch := make(chan *cloudwatchlogs.OutputLogEvent)

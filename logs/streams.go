@@ -3,9 +3,10 @@ package logs
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"log"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"	
 )
 
 type FilterLogStreamFunc func(context.Context, *cloudwatchlogs.LogStream) (bool, error)
@@ -19,7 +20,7 @@ func LogsStreamsWithBytes(ctx context.Context, s *cloudwatchlogs.LogStream) (boo
 	return true, nil
 }
 
-func GetMostRecentStreamForLogGroup(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, log_group string) (*cloudwatchlogs.LogStream, error) {
+func GetMostRecentStreamForLogGroup(ctx context.Context, svc *cloudwatchlogs.Client, log_group string) (*cloudwatchlogs.LogStream, error) {
 
 	filters := []FilterLogStreamFunc{
 		LogsStreamsWithBytes,

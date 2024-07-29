@@ -6,16 +6,18 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/aaronland/go-aws-cloudwatch/logs"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/aaronland/go-aws-cloudwatch/logs"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"	
 )
 
 func main() {
 
-	cloudwatch_dsn := flag.String("cloudwatch-dsn", "", "A valid aaronland/go-aws-session DSN string.")
+	cloudwatch_uri := flag.String("cloudwatch-uri", "", "...")
+	
 	prune := flag.Bool("prune", false, "Remove log streams with no events.")
 	dryrun := flag.Bool("dryrun", false, "Go through the motions but don't actually remove any log streams.")
 
@@ -36,7 +38,7 @@ func main() {
 
 	limiter := time.Tick(200 * time.Millisecond)
 
-	cloudwatch_svc, err := logs.GetServiceWithDSN(ctx, *cloudwatch_dsn)
+	cloudwatch_svc, err := logs.NewClient(ctx, *cloudwatch_uri)
 
 	if err != nil {
 		log.Fatalf("Failed to create service, %v", err)
