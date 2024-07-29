@@ -6,4 +6,4 @@ Work in progress. Documentation is incomplete.
 
 ## See also
 
-* https://github.com/aaronland/go-aws-session
+* https://github.com/aaronland/go-aws-auth
