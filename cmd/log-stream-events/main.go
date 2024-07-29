@@ -5,14 +5,17 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/aaronland/go-aws-cloudwatch/logs"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"log"
+
+	"github.com/aaronland/go-aws-cloudwatch/logs"
+	_ "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
 func main() {
 
-	cloudwatch_dsn := flag.String("cloudwatch-dsn", "", "A valid aaronland/go-aws-session DSN string.")
+	cloudwatch_uri := flag.String("cloudwatch-uri", "", "...")
+
 	cloudwatch_group := flag.String("log-group", "", "A valid CloudWatch log group name.")
 	cloudwatch_stream := flag.String("log-stream", "", "A valid CloudWatch log stream name.")
 
@@ -20,13 +23,13 @@ func main() {
 
 	ctx := context.Background()
 
-	cloudwatch_svc, err := logs.GetServiceWithDSN(ctx, *cloudwatch_dsn)
+	cloudwatch_svc, err := logs.NewClient(ctx, *cloudwatch_uri)
 
 	if err != nil {
 		log.Fatalf("Failed to create service, %v", err)
 	}
 
-	event_ch := make(chan *cloudwatchlogs.OutputLogEvent)
+	event_ch := make(chan *types.OutputLogEvent)
 
 	go func() {
 

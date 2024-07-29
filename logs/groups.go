@@ -3,16 +3,17 @@ package logs
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	_ "log"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
-type FilterLogGroupFunc func(context.Context, *cloudwatchlogs.LogGroup) (bool, error)
+type FilterLogGroupFunc func(context.Context, *types.LogGroup) (bool, error)
 
-func GetLogGroups(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, filters ...FilterLogGroupFunc) ([]*cloudwatchlogs.LogGroup, error) {
+func GetLogGroups(ctx context.Context, cl *cloudwatchlogs.Client, filters ...FilterLogGroupFunc) ([]*types.LogGroup, error) {
 
-	groups := make([]*cloudwatchlogs.LogGroup, 0)
+	groups := make([]*types.LogGroup, 0)
 
 	cursor := ""
 
@@ -33,7 +34,7 @@ func GetLogGroups(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, filte
 			opts.NextToken = aws.String(cursor)
 		}
 
-		rsp, err := svc.DescribeLogGroups(opts)
+		rsp, err := cl.DescribeLogGroups(ctx, opts)
 
 		if err != nil {
 			return nil, fmt.Errorf("Failed to describe groups, %w", err)
@@ -45,7 +46,7 @@ func GetLogGroups(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, filte
 
 			for _, f := range filters {
 
-				ok, err := f(ctx, s)
+				ok, err := f(ctx, &s)
 
 				if err != nil {
 					return nil, fmt.Errorf("Filter func for %s failed, %w", *s.LogGroupName, err)
@@ -61,7 +62,7 @@ func GetLogGroups(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, filte
 				continue
 			}
 
-			groups = append(groups, s)
+			groups = append(groups, &s)
 		}
 
 		if rsp.NextToken == nil {

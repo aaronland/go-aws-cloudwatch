@@ -3,14 +3,16 @@ package logs
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"log"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
-type FilterLogStreamFunc func(context.Context, *cloudwatchlogs.LogStream) (bool, error)
+type FilterLogStreamFunc func(context.Context, *types.LogStream) (bool, error)
 
-func LogsStreamsWithBytes(ctx context.Context, s *cloudwatchlogs.LogStream) (bool, error) {
+func LogsStreamsWithBytes(ctx context.Context, s *types.LogStream) (bool, error) {
 
 	if *s.StoredBytes == 0 {
 		return false, nil
@@ -19,13 +21,13 @@ func LogsStreamsWithBytes(ctx context.Context, s *cloudwatchlogs.LogStream) (boo
 	return true, nil
 }
 
-func GetMostRecentStreamForLogGroup(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, log_group string) (*cloudwatchlogs.LogStream, error) {
+func GetMostRecentStreamForLogGroup(ctx context.Context, cl *cloudwatchlogs.Client, log_group string) (*types.LogStream, error) {
 
 	filters := []FilterLogStreamFunc{
 		LogsStreamsWithBytes,
 	}
 
-	streams, err := GetLogGroupStreams(ctx, svc, log_group, filters...)
+	streams, err := GetLogGroupStreams(ctx, cl, log_group, filters...)
 
 	if err != nil {
 		return nil, fmt.Errorf("Failed to determine streams for log group, %w", err)
@@ -41,9 +43,9 @@ func GetMostRecentStreamForLogGroup(ctx context.Context, svc *cloudwatchlogs.Clo
 	return streams[count-1], nil
 }
 
-func GetLogGroupStreams(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, log_group string, filters ...FilterLogStreamFunc) ([]*cloudwatchlogs.LogStream, error) {
+func GetLogGroupStreams(ctx context.Context, cl *cloudwatchlogs.Client, log_group string, filters ...FilterLogStreamFunc) ([]*types.LogStream, error) {
 
-	streams := make([]*cloudwatchlogs.LogStream, 0)
+	streams := make([]*types.LogStream, 0)
 
 	cursor := ""
 
@@ -64,7 +66,7 @@ func GetLogGroupStreams(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs,
 			opts.NextToken = aws.String(cursor)
 		}
 
-		rsp, err := svc.DescribeLogStreams(opts)
+		rsp, err := cl.DescribeLogStreams(ctx, opts)
 
 		if err != nil {
 			return nil, fmt.Errorf("Failed to describe streams for %s, %w", log_group, err)
@@ -76,7 +78,7 @@ func GetLogGroupStreams(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs,
 
 			for _, f := range filters {
 
-				ok, err := f(ctx, s)
+				ok, err := f(ctx, &s)
 
 				if err != nil {
 					return nil, fmt.Errorf("Filter func for %s failed, %w", *s.LogStreamName, err)
@@ -92,7 +94,7 @@ func GetLogGroupStreams(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs,
 				continue
 			}
 
-			streams = append(streams, s)
+			streams = append(streams, &s)
 		}
 
 		if rsp.NextToken == nil {

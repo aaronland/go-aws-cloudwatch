@@ -2,21 +2,23 @@ package logs
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
 type GetLogEventsOptions struct {
 	LogGroupName    string
 	LogStreamName   string
 	StartFromHead   bool
-	LogEventChannel chan *cloudwatchlogs.OutputLogEvent
+	LogEventChannel chan *types.OutputLogEvent
 }
 
-func GetLogEventsAsList(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, opts *GetLogEventsOptions) ([]*cloudwatchlogs.OutputLogEvent, error) {
+func GetLogEventsAsList(ctx context.Context, cl *cloudwatchlogs.Client, opts *GetLogEventsOptions) ([]*types.OutputLogEvent, error) {
 
-	events := make([]*cloudwatchlogs.OutputLogEvent, 0)
-	events_ch := make(chan *cloudwatchlogs.OutputLogEvent)
+	events := make([]*types.OutputLogEvent, 0)
+	events_ch := make(chan *types.OutputLogEvent)
 	done_ch := make(chan bool)
 
 	defer func() {
@@ -40,7 +42,7 @@ func GetLogEventsAsList(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs,
 
 	opts.LogEventChannel = events_ch
 
-	err := GetLogEvents(ctx, svc, opts)
+	err := GetLogEvents(ctx, cl, opts)
 
 	if err != nil {
 		return nil, err
@@ -49,7 +51,7 @@ func GetLogEventsAsList(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs,
 	return events, nil
 }
 
-func GetLogEvents(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, opts *GetLogEventsOptions) error {
+func GetLogEvents(ctx context.Context, cl *cloudwatchlogs.Client, opts *GetLogEventsOptions) error {
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -75,7 +77,7 @@ func GetLogEvents(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, opts 
 			req.NextToken = aws.String(cursor)
 		}
 
-		rsp, err := svc.GetLogEvents(req)
+		rsp, err := cl.GetLogEvents(ctx, req)
 
 		if err != nil {
 			return err
@@ -86,7 +88,7 @@ func GetLogEvents(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, opts 
 		}
 
 		for _, e := range rsp.Events {
-			opts.LogEventChannel <- e
+			opts.LogEventChannel <- &e
 		}
 
 		// sigh... (20190213/thisisaaronland)
