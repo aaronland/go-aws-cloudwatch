@@ -2,22 +2,23 @@ package logs
 
 import (
 	"context"
-	
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
 type GetLogEventsOptions struct {
 	LogGroupName    string
 	LogStreamName   string
 	StartFromHead   bool
-	LogEventChannel chan *cloudwatchlogs.OutputLogEvent
+	LogEventChannel chan *types.OutputLogEvent
 }
 
-func GetLogEventsAsList(ctx context.Context, svc *cloudwatchlogs.Client, opts *GetLogEventsOptions) ([]*cloudwatchlogs.OutputLogEvent, error) {
+func GetLogEventsAsList(ctx context.Context, svc *cloudwatchlogs.Client, opts *GetLogEventsOptions) ([]*types.OutputLogEvent, error) {
 
-	events := make([]*cloudwatchlogs.OutputLogEvent, 0)
-	events_ch := make(chan *cloudwatchlogs.OutputLogEvent)
+	events := make([]*types.OutputLogEvent, 0)
+	events_ch := make(chan *types.OutputLogEvent)
 	done_ch := make(chan bool)
 
 	defer func() {
@@ -50,7 +51,7 @@ func GetLogEventsAsList(ctx context.Context, svc *cloudwatchlogs.Client, opts *G
 	return events, nil
 }
 
-func GetLogEvents(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, opts *GetLogEventsOptions) error {
+func GetLogEvents(ctx context.Context, svc *cloudwatchlogs.Client, opts *GetLogEventsOptions) error {
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

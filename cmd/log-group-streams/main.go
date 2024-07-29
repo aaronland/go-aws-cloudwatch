@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/aaronland/go-aws-cloudwatch/logs"	
+	"github.com/aaronland/go-aws-cloudwatch/logs"
 )
 
 func main() {
 
-	cloudwatch_uri := flag.String("cloudwatch-uri", "", "...")	
+	cloudwatch_uri := flag.String("cloudwatch-uri", "", "...")
 
 	cloudwatch_loggroup := flag.String("log-group", "", "A valid CloudWatch log group name.")
 
@@ -20,7 +20,7 @@ func main() {
 
 	ctx := context.Background()
 
-	cloudwatch_svc, err := logs.NewClient(ctx, *cloudwatch_uri)	
+	cloudwatch_svc, err := logs.NewClient(ctx, *cloudwatch_uri)
 
 	if err != nil {
 		log.Fatalf("Failed to create service, %v", err)

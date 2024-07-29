@@ -11,13 +11,13 @@ import (
 	"time"
 
 	"github.com/aaronland/go-aws-cloudwatch/logs"
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"	
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 )
 
 func main() {
 
 	cloudwatch_uri := flag.String("cloudwatch-uri", "", "...")
-	
+
 	prune := flag.Bool("prune", false, "Remove log streams with no events.")
 	dryrun := flag.Bool("dryrun", false, "Go through the motions but don't actually remove any log streams.")
 

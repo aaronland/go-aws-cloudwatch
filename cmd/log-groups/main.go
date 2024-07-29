@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/aaronland/go-aws-cloudwatch/logs"	
+	"github.com/aaronland/go-aws-cloudwatch/logs"
 )
 
 func main() {
@@ -18,7 +18,7 @@ func main() {
 
 	ctx := context.Background()
 
-	cloudwatch_svc, err := logs.NewClient(ctx, *cloudwatch_uri)	
+	cloudwatch_svc, err := logs.NewClient(ctx, *cloudwatch_uri)
 
 	if err != nil {
 		log.Fatalf("Failed to create service, %v", err)

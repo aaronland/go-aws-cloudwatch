@@ -3,14 +3,15 @@ package logs
 import (
 	"context"
 	"fmt"
-	
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
-type FilterLogGroupFunc func(context.Context, *cloudwatchlogs.LogGroup) (bool, error)
+type FilterLogGroupFunc func(context.Context, *types.LogGroup) (bool, error)
 
-func GetLogGroups(ctx context.Context, svc *cloudwatchlogs.Client, filters ...FilterLogGroupFunc) ([]*cloudwatchlogs.LogGroup, error) {
+func GetLogGroups(ctx context.Context, svc *cloudwatchlogs.Client, filters ...FilterLogGroupFunc) ([]*types.LogGroup, error) {
 
 	groups := make([]*cloudwatchlogs.LogGroup, 0)
 

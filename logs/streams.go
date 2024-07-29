@@ -6,12 +6,13 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"	
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
-type FilterLogStreamFunc func(context.Context, *cloudwatchlogs.LogStream) (bool, error)
+type FilterLogStreamFunc func(context.Context, *types.LogStream) (bool, error)
 
-func LogsStreamsWithBytes(ctx context.Context, s *cloudwatchlogs.LogStream) (bool, error) {
+func LogsStreamsWithBytes(ctx context.Context, s *types.LogStream) (bool, error) {
 
 	if *s.StoredBytes == 0 {
 		return false, nil
@@ -20,7 +21,7 @@ func LogsStreamsWithBytes(ctx context.Context, s *cloudwatchlogs.LogStream) (boo
 	return true, nil
 }
 
-func GetMostRecentStreamForLogGroup(ctx context.Context, svc *cloudwatchlogs.Client, log_group string) (*cloudwatchlogs.LogStream, error) {
+func GetMostRecentStreamForLogGroup(ctx context.Context, svc *cloudwatchlogs.Client, log_group string) (*types.LogStream, error) {
 
 	filters := []FilterLogStreamFunc{
 		LogsStreamsWithBytes,
@@ -42,9 +43,9 @@ func GetMostRecentStreamForLogGroup(ctx context.Context, svc *cloudwatchlogs.Cli
 	return streams[count-1], nil
 }
 
-func GetLogGroupStreams(ctx context.Context, svc *cloudwatchlogs.CloudWatchLogs, log_group string, filters ...FilterLogStreamFunc) ([]*cloudwatchlogs.LogStream, error) {
+func GetLogGroupStreams(ctx context.Context, svc *cloudwatchlogs.Client, log_group string, filters ...FilterLogStreamFunc) ([]*types.LogStream, error) {
 
-	streams := make([]*cloudwatchlogs.LogStream, 0)
+	streams := make([]*types.LogStream, 0)
 
 	cursor := ""
 
