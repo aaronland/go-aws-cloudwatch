@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.30.3
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.37.3
 	github.com/sfomuseum/go-flags v0.10.0
+	github.com/sfomuseum/iso8601duration v1.1.0
 )
 
 require (

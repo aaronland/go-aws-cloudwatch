@@ -11,25 +11,22 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
+// See also: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
+
 type FilterLogEventFunc func(context.Context, *types.OutputLogEvent) (bool, error)
 
 func FilterLambdaStartEndEventFunc() FilterLogEventFunc {
 
 	fn := func(ctx context.Context, ev *types.OutputLogEvent) (bool, error) {
 
-		// slog.Debug("Filter Lambda start/end", "message", *ev.Message)
-
 		if strings.HasPrefix(*ev.Message, "START RequestId: ") {
-			// slog.Debug("Skip message", "message", *ev.Message)
 			return false, nil
 		}
 
 		if strings.HasPrefix(*ev.Message, "END RequestId: ") {
-			// slog.Debug("Skip message", "message", *ev.Message)
 			return false, nil
 		}
 
-		// slog.Debug("Include message", "message", *ev.Message)
 		return true, nil
 	}
 
@@ -73,6 +70,15 @@ func GetLogEvents(ctx context.Context, cl *cloudwatchlogs.Client, opts *GetLogEv
 
 					if !yield(ev, err) {
 						return
+					}
+				}
+
+				if opts.StartTime > 0 {
+
+					last := int64(float64(*s.LastEventTimestamp) / 1000.)
+
+					if opts.StartTime >= last {
+						break
 					}
 				}
 
@@ -129,7 +135,7 @@ func GetLogEvents(ctx context.Context, cl *cloudwatchlogs.Client, opts *GetLogEv
 			}
 
 			if len(rsp.Events) == 0 {
-				slog.Debug("No event", "group", opts.LogGroupName, "stream", opts.LogStreamName)
+				// slog.Debug("No event", "group", opts.LogGroupName, "stream", opts.LogStreamName)
 				break
 			}
 

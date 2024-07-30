@@ -55,7 +55,7 @@ func GetLogGroups(ctx context.Context, cl *cloudwatchlogs.Client, filters ...Fil
 					}
 
 					if !ok {
-						ok = false
+						include_group = false
 						break
 					}
 				}

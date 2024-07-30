@@ -82,6 +82,8 @@ func GetLogGroupStreams(ctx context.Context, cl *cloudwatchlogs.Client, log_grou
 			}
 
 			// https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs#DescribeLogStreamsInput
+			// https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs#DescribeLogStreamsOutput
+			// https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs@v1.37.3/types#LogStream
 
 			opts := &cloudwatchlogs.DescribeLogStreamsInput{
 				LogGroupName: aws.String(log_group),
@@ -117,7 +119,7 @@ func GetLogGroupStreams(ctx context.Context, cl *cloudwatchlogs.Client, log_grou
 					}
 
 					if !ok {
-						ok = false
+						include_stream = false
 						break
 					}
 				}
