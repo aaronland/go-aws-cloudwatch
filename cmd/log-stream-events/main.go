@@ -8,8 +8,6 @@ import (
 	"log"
 
 	"github.com/aaronland/go-aws-cloudwatch/logs"
-	_ "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
 func main() {
@@ -23,39 +21,24 @@ func main() {
 
 	ctx := context.Background()
 
-	cloudwatch_svc, err := logs.NewClient(ctx, *cloudwatch_uri)
+	cloudwatch_cl, err := logs.NewClient(ctx, *cloudwatch_uri)
 
 	if err != nil {
 		log.Fatalf("Failed to create service, %v", err)
 	}
 
-	event_ch := make(chan *types.OutputLogEvent)
-
-	go func() {
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case ev := <-event_ch:
-				fmt.Println(*ev.Message)
-			}
-		}
-	}()
-
 	opts := &logs.GetLogEventsOptions{
 		LogGroupName:    *cloudwatch_group,
 		LogStreamName:   *cloudwatch_stream,
-		LogEventChannel: event_ch,
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	for e, err := range logs.GetLogEvents(ctx, cloudwatch_cl, opts) {
 
-	err = logs.GetLogEvents(ctx, cloudwatch_svc, opts)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	if err != nil {
-		log.Fatalf("Failed to get log events, %v")
+		fmt.Println(e)
 	}
 
 }

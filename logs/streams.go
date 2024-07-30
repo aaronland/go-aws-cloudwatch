@@ -4,7 +4,7 @@ import (
 	"context"
 	"iter"
 	"log/slog"
-
+	
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
@@ -42,16 +42,16 @@ func GetMostRecentStreamForLogGroup(ctx context.Context, cl *cloudwatchlogs.Clie
 	}
 
 	var last *types.LogStream
-
+	
 	for s, err := range GetLogGroupStreams(ctx, cl, log_group, filters...) {
 
 		if err != nil {
 			return nil, err
 		}
-
+		
 		last = s
 	}
-
+	
 	return last, nil
 }
 
@@ -67,75 +67,75 @@ func GetLogGroupStreamsSince(ctx context.Context, cl *cloudwatchlogs.Client, log
 
 func GetLogGroupStreams(ctx context.Context, cl *cloudwatchlogs.Client, log_group string, filters ...FilterLogStreamFunc) iter.Seq2[*types.LogStream, error] {
 
-	return func(yield func(*types.LogStream, error) bool) {
-
+	return func( yield func(*types.LogStream, error) bool) {
+		
 		cursor := ""
-
+		
 		for {
-
+			
 			select {
 			case <-ctx.Done():
-				return
+				return 
 			default:
 				// pass
 			}
-
+			
 			opts := &cloudwatchlogs.DescribeLogStreamsInput{
 				LogGroupName: aws.String(log_group),
 			}
-
+			
 			if cursor != "" {
 				opts.NextToken = aws.String(cursor)
 			}
 
 			rsp, err := cl.DescribeLogStreams(ctx, opts)
-
+			
 			if err != nil {
 				slog.Error("Failed to describe log stream", "error", err)
 				yield(nil, err)
 				return
 			}
-
+				
 			for _, s := range rsp.LogStreams {
-
+				
 				include_stream := true
-
+				
 				for _, f := range filters {
-
+					
 					ok, err := f(ctx, &s)
-
+					
 					if err != nil {
 						slog.Error("Stream filter failed, skipping", "error", err)
-						if !yield(nil, err) {
+						if !yield(nil, err){
 							return
 						}
 					}
-
+					
 					if !ok {
 						ok = false
 						break
 					}
 				}
-
+				
 				if !include_stream {
 					continue
 				}
 
-				if !yield(&s, err) {
+				if !yield(&s, err){
 					return
-				}
+				}				
 			}
-
+			
 			if rsp.NextToken == nil {
 				break
 			}
-
+			
 			if *rsp.NextToken != "" && *rsp.NextToken != cursor {
 				cursor = *rsp.NextToken
 			} else {
 				break
 			}
-
+			
 		}
 	}
 }
