@@ -18,19 +18,18 @@ func main() {
 
 	ctx := context.Background()
 
-	cloudwatch_svc, err := logs.NewClient(ctx, *cloudwatch_uri)
+	cloudwatch_cl, err := logs.NewClient(ctx, *cloudwatch_uri)
 
 	if err != nil {
 		log.Fatalf("Failed to create service, %v", err)
 	}
 
-	groups, err := logs.GetLogGroups(ctx, cloudwatch_svc)
+	for g, err := range logs.GetLogGroups(ctx, cloudwatch_cl) {
 
-	if err != nil {
-		log.Fatalf("Failed to get log groups, %v", err)
-	}
+		if err != nil {
+			log.Fatalf("Failed to get log groups, %v", err)
+		}
 
-	for _, g := range groups {
 		fmt.Println(*g.LogGroupName)
 	}
 

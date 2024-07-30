@@ -28,8 +28,8 @@ func main() {
 	}
 
 	opts := &logs.GetLogEventsOptions{
-		LogGroupName:    *cloudwatch_group,
-		LogStreamName:   *cloudwatch_stream,
+		LogGroupName:  *cloudwatch_group,
+		LogStreamName: *cloudwatch_stream,
 	}
 
 	for e, err := range logs.GetLogEvents(ctx, cloudwatch_cl, opts) {
