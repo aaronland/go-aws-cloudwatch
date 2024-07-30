@@ -4,11 +4,13 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
+	_ "fmt"
 	"log"
 	"log/slog"
 	"time"
-
+	"io"
+	"os"
+	
 	"github.com/aaronland/go-aws-cloudwatch/logs"
 	"github.com/sfomuseum/go-flags/multi"
 	"github.com/sfomuseum/iso8601duration"
@@ -21,6 +23,10 @@ func main() {
 	var cloudwatch_stream string
 	var verbose bool
 
+	var stdout bool
+	var stderr bool
+	var null bool
+	
 	var since string
 	var str_filters multi.MultiString
 
@@ -36,6 +42,10 @@ func main() {
 	flag.BoolVar(&verbose, "verbose", false, "")
 	flag.Var(&str_filters, "filter", "")
 
+	flag.BoolVar(&stdout, "stdout", false, "Write log events to STDOUT.")
+	flag.BoolVar(&stderr, "stderr", false, "Write log events to STDERR.")
+	flag.BoolVar(&null, "null", false, "Write log events to /dev/null.")
+	
 	flag.Parse()
 
 	if verbose {
@@ -45,6 +55,22 @@ func main() {
 
 	ctx := context.Background()
 
+	writers := make([]io.Writer, 0)
+
+	if stdout {
+		writers = append(writers, os.Stdout)
+	}
+
+	if stderr {
+		writers = append(writers, os.Stderr)
+	}
+
+	if null {
+		writers = append(writers, io.Discard)
+	}
+	
+	mw := io.MultiWriter(writers...)
+	
 	cloudwatch_cl, err := logs.NewClient(ctx, cloudwatch_uri)
 
 	if err != nil {
@@ -94,7 +120,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		fmt.Println(*ev.Message)
+		mw.Write([]byte(*ev.Message))
 	}
 
 }
