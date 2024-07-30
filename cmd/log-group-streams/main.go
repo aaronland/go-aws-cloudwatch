@@ -26,14 +26,13 @@ func main() {
 		log.Fatalf("Failed to create service, %v", err)
 	}
 
-	streams, err := logs.GetLogGroupStreams(ctx, cloudwatch_svc, *cloudwatch_loggroup)
+	for s, err := range logs.GetLogGroupStreams(ctx, cloudwatch_svc, *cloudwatch_loggroup) {
 
-	if err != nil {
-		log.Fatalf("Failed to get log streams, %v", err)
-	}
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	for _, s := range streams {
-		fmt.Println(*s.LogStreamName)
+		fmt.Println(*s.LogStreamName, err)
 	}
 
 }

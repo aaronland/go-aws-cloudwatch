@@ -2,8 +2,8 @@ package logs
 
 import (
 	"context"
-	"fmt"
-	"log"
+	"iter"
+	"log/slog"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
@@ -12,19 +12,23 @@ import (
 
 type FilterLogStreamFunc func(context.Context, *types.LogStream) (bool, error)
 
-func LogsStreamsWithBytes(ctx context.Context, s *types.LogStream) (bool, error) {
-
-	if *s.StoredBytes == 0 {
-		return false, nil
-	}
-
-	return true, nil
-}
-
-func LogStreamsSinceFunc(ctx context.Context, ts int64) FilterLogStreamFunc {
+func LogsStreamsWithBytesFunc() FilterLogStreamFunc {
 
 	fn := func(ctx context.Context, s *types.LogStream) (bool, error) {
 
+		if *s.StoredBytes == 0 {
+			return false, nil
+		}
+
+		return true, nil
+	}
+
+	return fn
+}
+
+func LogStreamsSinceFunc(ts int64) FilterLogStreamFunc {
+
+	fn := func(ctx context.Context, s *types.LogStream) (bool, error) {
 		return *s.LastEventTimestamp >= ts, nil
 	}
 
@@ -34,90 +38,104 @@ func LogStreamsSinceFunc(ctx context.Context, ts int64) FilterLogStreamFunc {
 func GetMostRecentStreamForLogGroup(ctx context.Context, cl *cloudwatchlogs.Client, log_group string) (*types.LogStream, error) {
 
 	filters := []FilterLogStreamFunc{
-		LogsStreamsWithBytes,
+		LogsStreamsWithBytesFunc(),
 	}
 
-	streams, err := GetLogGroupStreams(ctx, cl, log_group, filters...)
+	var last *types.LogStream
 
-	if err != nil {
-		return nil, fmt.Errorf("Failed to determine streams for log group, %w", err)
-	}
-
-	for _, s := range streams {
-
-		log.Println(*s.LogStreamName, *s.FirstEventTimestamp, *s.LastEventTimestamp)
-	}
-
-	count := len(streams)
-
-	return streams[count-1], nil
-}
-
-func GetLogGroupStreams(ctx context.Context, cl *cloudwatchlogs.Client, log_group string, filters ...FilterLogStreamFunc) ([]*types.LogStream, error) {
-
-	streams := make([]*types.LogStream, 0)
-
-	cursor := ""
-
-	for {
-
-		select {
-		case <-ctx.Done():
-			return streams, nil
-		default:
-			// pass
-		}
-
-		opts := &cloudwatchlogs.DescribeLogStreamsInput{
-			LogGroupName: aws.String(log_group),
-		}
-
-		if cursor != "" {
-			opts.NextToken = aws.String(cursor)
-		}
-
-		rsp, err := cl.DescribeLogStreams(ctx, opts)
+	for s, err := range GetLogGroupStreams(ctx, cl, log_group, filters...) {
 
 		if err != nil {
-			return nil, fmt.Errorf("Failed to describe streams for %s, %w", log_group, err)
+			return nil, err
 		}
 
-		for _, s := range rsp.LogStreams {
-
-			include_stream := true
-
-			for _, f := range filters {
-
-				ok, err := f(ctx, &s)
-
-				if err != nil {
-					return nil, fmt.Errorf("Filter func for %s failed, %w", *s.LogStreamName, err)
-				}
-
-				if !ok {
-					ok = false
-					break
-				}
-			}
-
-			if !include_stream {
-				continue
-			}
-
-			streams = append(streams, &s)
-		}
-
-		if rsp.NextToken == nil {
-			break
-		}
-
-		if *rsp.NextToken != "" && *rsp.NextToken != cursor {
-			cursor = *rsp.NextToken
-		} else {
-			break
-		}
-
+		last = s
 	}
 
-	return streams, nil
+	return last, nil
+}
+
+func GetLogGroupStreamsSince(ctx context.Context, cl *cloudwatchlogs.Client, log_group string, ts int64) iter.Seq2[*types.LogStream, error] {
+
+	filters := []FilterLogStreamFunc{
+		LogsStreamsWithBytesFunc(),
+		LogStreamsSinceFunc(ts),
+	}
+
+	return GetLogGroupStreams(ctx, cl, log_group, filters...)
+}
+
+func GetLogGroupStreams(ctx context.Context, cl *cloudwatchlogs.Client, log_group string, filters ...FilterLogStreamFunc) iter.Seq2[*types.LogStream, error] {
+
+	return func(yield func(*types.LogStream, error) bool) {
+
+		cursor := ""
+
+		for {
+
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				// pass
+			}
+
+			opts := &cloudwatchlogs.DescribeLogStreamsInput{
+				LogGroupName: aws.String(log_group),
+			}
+
+			if cursor != "" {
+				opts.NextToken = aws.String(cursor)
+			}
+
+			rsp, err := cl.DescribeLogStreams(ctx, opts)
+
+			if err != nil {
+				slog.Error("Failed to describe log stream", "error", err)
+				yield(nil, err)
+				return
+			}
+
+			for _, s := range rsp.LogStreams {
+
+				include_stream := true
+
+				for _, f := range filters {
+
+					ok, err := f(ctx, &s)
+
+					if err != nil {
+						slog.Error("Stream filter failed, skipping", "error", err)
+						if !yield(nil, err) {
+							return
+						}
+					}
+
+					if !ok {
+						ok = false
+						break
+					}
+				}
+
+				if !include_stream {
+					continue
+				}
+
+				if !yield(&s, err) {
+					return
+				}
+			}
+
+			if rsp.NextToken == nil {
+				break
+			}
+
+			if *rsp.NextToken != "" && *rsp.NextToken != cursor {
+				cursor = *rsp.NextToken
+			} else {
+				break
+			}
+
+		}
+	}
 }
