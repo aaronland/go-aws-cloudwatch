@@ -6,6 +6,7 @@ require (
 	github.com/aaronland/go-aws-auth v1.6.2
 	github.com/aws/aws-sdk-go-v2 v1.30.3
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.37.3
+	github.com/sfomuseum/go-flags v0.10.0
 )
 
 require (

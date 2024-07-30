@@ -18,6 +18,8 @@ import (
 
 func main() {
 
+	var verbose bool
+
 	cloudwatch_uri := flag.String("cloudwatch-uri", "", "...")
 
 	prune := flag.Bool("prune", false, "Remove log streams with no events.")
@@ -25,7 +27,14 @@ func main() {
 
 	max_workers := flag.Int("max-workers", 100, "The maximum number of concurrent workers.")
 
+	flag.BoolVar(&verbose, "verbose", false, "")
+
 	flag.Parse()
+
+	if verbose {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+		slog.Debug("Verbose logging enabled")
+	}
 
 	ctx := context.Background()
 
@@ -56,13 +65,15 @@ func main() {
 	}
 
 	wg := new(sync.WaitGroup)
-	
+
 	for gr, err := range logs.GetLogGroups(ctx, cloudwatch_cl) {
 
 		if err != nil {
 			log.Fatalf("Failed to get log groups, %v", err)
 		}
-		
+
+		slog.Debug("Process group", "group", *gr.LogGroupName)
+
 		for st, err := range logs.GetLogGroupStreams(ctx, cloudwatch_cl, *gr.LogGroupName, stream_filter) {
 
 			if err != nil {
@@ -71,46 +82,57 @@ func main() {
 
 			if *prune {
 
+				slog.Debug("Prune stream", "group", *gr.LogGroupName, "stream", *st.LogStreamName)
+
 				events_opts := &logs.GetLogEventsOptions{
 					LogGroupName:  *gr.LogGroupName,
 					LogStreamName: *st.LogStreamName,
 				}
+
+				has_events := false
 
 				for _, err := range logs.GetLogEvents(ctx, cloudwatch_cl, events_opts) {
 
 					if err != nil {
 						log.Fatalf("Failed to get events for %s (%s), %v", *gr.LogGroupName, *st.LogStreamName, err)
 					}
-					
-					wg.Add(1)
-					
-					go func(g *types.LogGroup, s *types.LogStream) {
-						
-						defer func() {
-							throttle <- true
-							wg.Done()
-						}()
-						
-						<-throttle
-						<-limiter
-						
-						if *dryrun {
-							slog.Info("Prune (dryrun)", "group", *g.LogGroupName, "stream", *s.LogStreamName)
-							return
-						}
-						
-						err := pruneStream(ctx, cloudwatch_cl, g, s)
-						
-						if err != nil {
-							slog.Info("Failed to prune", "group", *g.LogGroupName, "stream", *s.LogStreamName, "error", err)							
-						} else {
-							slog.Info("Success", "group", *g.LogGroupName, "stream", *s.LogStreamName)
-						}
-						
-					}(gr, st)
 
+					has_events = true
 					break
 				}
+
+				if has_events {
+					slog.Debug("Stream has events, skipping", "group", *gr.LogGroupName, "stream", *st.LogStreamName)
+					continue
+				}
+
+				wg.Add(1)
+
+				go func(g *types.LogGroup, s *types.LogStream) {
+
+					defer func() {
+						throttle <- true
+						wg.Done()
+					}()
+
+					<-throttle
+					<-limiter
+
+					if *dryrun {
+						slog.Info("Prune (dryrun)", "group", *g.LogGroupName, "stream", *s.LogStreamName)
+						return
+					}
+
+					err := pruneStream(ctx, cloudwatch_cl, g, s)
+
+					if err != nil {
+						slog.Info("Failed to prune", "group", *g.LogGroupName, "stream", *s.LogStreamName, "error", err)
+					} else {
+						slog.Info("Successfully pruned stream", "group", *g.LogGroupName, "stream", *s.LogStreamName)
+					}
+
+				}(gr, st)
+
 			}
 		}
 	}
@@ -120,9 +142,6 @@ func main() {
 
 func pruneStream(ctx context.Context, cl *cloudwatchlogs.Client, g *types.LogGroup, s *types.LogStream) error {
 
-	slog.Info("Delete stream", "group", g, "stream", s)
-	return nil
-	
 	opts := &cloudwatchlogs.DeleteLogStreamInput{
 		LogGroupName:  g.LogGroupName,
 		LogStreamName: s.LogStreamName,

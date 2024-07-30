@@ -41,7 +41,7 @@ func GetMostRecentStreamForLogGroup(ctx context.Context, cl *cloudwatchlogs.Clie
 		LogsStreamsWithBytesFunc(),
 	}
 
-	var last *types.LogStream
+	var recent *types.LogStream
 
 	for s, err := range GetLogGroupStreams(ctx, cl, log_group, filters...) {
 
@@ -49,10 +49,11 @@ func GetMostRecentStreamForLogGroup(ctx context.Context, cl *cloudwatchlogs.Clie
 			return nil, err
 		}
 
-		last = s
+		recent = s
+		break
 	}
 
-	return last, nil
+	return recent, nil
 }
 
 func GetLogGroupStreamsSince(ctx context.Context, cl *cloudwatchlogs.Client, log_group string, ts int64) iter.Seq2[*types.LogStream, error] {
@@ -80,8 +81,12 @@ func GetLogGroupStreams(ctx context.Context, cl *cloudwatchlogs.Client, log_grou
 				// pass
 			}
 
+			// https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs#DescribeLogStreamsInput
+
 			opts := &cloudwatchlogs.DescribeLogStreamsInput{
 				LogGroupName: aws.String(log_group),
+				// Default to most recent
+				Descending: aws.Bool(true),
 			}
 
 			if cursor != "" {
