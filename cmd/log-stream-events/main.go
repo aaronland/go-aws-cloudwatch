@@ -5,12 +5,12 @@ import (
 	"context"
 	"flag"
 	_ "fmt"
+	"io"
 	"log"
 	"log/slog"
-	"time"
-	"io"
 	"os"
-	
+	"time"
+
 	"github.com/aaronland/go-aws-cloudwatch/logs"
 	"github.com/sfomuseum/go-flags/multi"
 	"github.com/sfomuseum/iso8601duration"
@@ -26,12 +26,11 @@ func main() {
 	var stdout bool
 	var stderr bool
 	var null bool
-	
+
 	var since string
 	var str_filters multi.MultiString
 
-	flag.StringVar(&cloudwatch_uri, "cloudwatch-uri", "", "...")
-
+	flag.StringVar(&cloudwatch_uri, "cloudwatch-uri", "", "A valid aaronland/go-aws-auth URI.")
 	flag.StringVar(&cloudwatch_group, "log-group", "", "A valid CloudWatch log group name.")
 	flag.StringVar(&cloudwatch_stream, "log-stream", "", "A valid CloudWatch log stream name.")
 
@@ -39,13 +38,13 @@ func main() {
 
 	// start / end stuff here
 
-	flag.BoolVar(&verbose, "verbose", false, "")
+	flag.BoolVar(&verbose, "verbose", false, "Enable verbose (debug) logging.")
 	flag.Var(&str_filters, "filter", "")
 
 	flag.BoolVar(&stdout, "stdout", false, "Write log events to STDOUT.")
 	flag.BoolVar(&stderr, "stderr", false, "Write log events to STDERR.")
 	flag.BoolVar(&null, "null", false, "Write log events to /dev/null.")
-	
+
 	flag.Parse()
 
 	if verbose {
@@ -68,9 +67,9 @@ func main() {
 	if null {
 		writers = append(writers, io.Discard)
 	}
-	
+
 	mw := io.MultiWriter(writers...)
-	
+
 	cloudwatch_cl, err := logs.NewClient(ctx, cloudwatch_uri)
 
 	if err != nil {
