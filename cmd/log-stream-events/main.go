@@ -4,11 +4,12 @@ package main
 import (
 	"context"
 	"flag"
-	_ "fmt"
+	"fmt"
 	"io"
 	"log"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aaronland/go-aws-cloudwatch/logs"
@@ -120,7 +121,10 @@ func main() {
 			log.Fatal(err)
 		}
 
-		mw.Write([]byte(*ev.Message))
+		m := strings.TrimSpace(*ev.Message)
+		m = fmt.Sprintf("%s\n", m)
+		
+		mw.Write([]byte(m))		
 	}
 
 }
