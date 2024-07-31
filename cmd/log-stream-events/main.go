@@ -92,8 +92,9 @@ func main() {
 		now := time.Now()
 		then := now.Add(-dur.ToDuration())
 
-		slog.Debug("Filter events starting on or after", "dt", then.Format(time.RFC3339), "timestamp", then.Unix())
-		opts.StartTime = then.Unix()
+		opts.StartTime = then.Unix() * 1000
+
+		slog.Debug("Filter events starting on or after", "dt", then.Format(time.RFC3339), "timestamp", then.Unix(), "start", opts.StartTime)
 	}
 
 	if len(str_filters) > 0 {

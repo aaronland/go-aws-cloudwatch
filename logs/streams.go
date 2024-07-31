@@ -89,6 +89,7 @@ func GetLogGroupStreams(ctx context.Context, cl *cloudwatchlogs.Client, log_grou
 				LogGroupName: aws.String(log_group),
 				// Default to most recent
 				Descending: aws.Bool(true),
+				OrderBy:    types.OrderByLastEventTime,
 			}
 
 			if cursor != "" {

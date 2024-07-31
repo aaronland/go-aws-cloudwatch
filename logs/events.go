@@ -46,13 +46,14 @@ func GetLogEvents(ctx context.Context, cl *cloudwatchlogs.Client, opts *GetLogEv
 
 	if opts.LogStreamName == "" {
 
-		slog.Debug("Stream name is empty, polling all stream for group")
+		slog.Debug("Stream name is empty, polling all streams for group", "group", opts.LogGroupName)
 
 		return func(yield func(*types.OutputLogEvent, error) bool) {
 
 			for s, err := range GetLogGroupStreams(ctx, cl, opts.LogGroupName) {
 
 				if err != nil {
+					slog.Error("Failed to get streams for group", "group", opts.LogGroupName, "error", err)
 					yield(nil, err)
 					return
 				}
@@ -66,6 +67,8 @@ func GetLogEvents(ctx context.Context, cl *cloudwatchlogs.Client, opts *GetLogEv
 					Filters:       opts.Filters,
 				}
 
+				slog.Debug("Get events for stream", "group", opts.LogGroupName, "stream", *s.LogStreamName, "first event", *s.FirstEventTimestamp, "last event", *s.LastEventTimestamp, "start from head", opts.StartFromHead)
+
 				for ev, err := range GetLogEvents(ctx, cl, ev_opts) {
 
 					if !yield(ev, err) {
@@ -75,9 +78,12 @@ func GetLogEvents(ctx context.Context, cl *cloudwatchlogs.Client, opts *GetLogEv
 
 				if opts.StartTime > 0 {
 
-					last := int64(float64(*s.LastEventTimestamp) / 1000.)
+					last := *s.LastEventTimestamp
+					stop := opts.StartTime >= last
 
-					if opts.StartTime >= last {
+					// slog.Debug("Test timestamps", "start", opts.StartTime, "last", last, "stop", stop)
+
+					if stop {
 						break
 					}
 				}
@@ -125,17 +131,20 @@ func GetLogEvents(ctx context.Context, cl *cloudwatchlogs.Client, opts *GetLogEv
 				req.NextToken = aws.String(cursor)
 			}
 
+			slog.Debug("Get events", "group", opts.LogGroupName, "stream", opts.LogStreamName, "start", opts.StartTime, "cursor", cursor)
+
 			rsp, err := cl.GetLogEvents(ctx, req)
 
 			if err != nil {
 
+				slog.Error("Failed to retrieve log events", "group", opts.LogGroupName, "stream", opts.LogStreamName, "error", err)
 				if !yield(nil, err) {
 					return
 				}
 			}
 
 			if len(rsp.Events) == 0 {
-				// slog.Debug("No event", "group", opts.LogGroupName, "stream", opts.LogStreamName)
+				// slog.Debug("No events from group/stream", "group", opts.LogGroupName, "stream", opts.LogStreamName)
 				break
 			}
 
