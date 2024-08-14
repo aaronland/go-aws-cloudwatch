@@ -1,5 +1,5 @@
-github.com/aaronland/go-aws-auth v1.6.2 h1:hUKqt1WnFCiAnNVvznF/pfT1JTPTHXInKNbXaPhBlPc=
-github.com/aaronland/go-aws-auth v1.6.2/go.mod h1:+t/vLj8Uq/Sjf13LQOJdgP2GG+/c+dBxQxA7wYad4bQ=
+github.com/aaronland/go-aws-auth v1.6.3 h1:AL5Q3nBRB+zeAz9Br8KRO8Y5wpeb2SaB/169CHlP9v8=
+github.com/aaronland/go-aws-auth v1.6.3/go.mod h1:+t/vLj8Uq/Sjf13LQOJdgP2GG+/c+dBxQxA7wYad4bQ=
 github.com/aws/aws-sdk-go-v2 v1.30.3 h1:jUeBtG0Ih+ZIFH0F4UkmL9w3cSpaMv9tYYDbzILP8dY=
 github.com/aws/aws-sdk-go-v2 v1.30.3/go.mod h1:nIQjQVp5sfpQcTc9mPSr1B0PaWK5ByX9MOoDadSN4lc=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.3 h1:tW1/Rkad38LA15X4UQtjXZXNKsCgkshC3EbmcUmghTg=
@@ -52,8 +52,8 @@ github.com/sfomuseum/go-flags v0.10.0/go.mod h1:VXOnnX1/yxQpX2yiwHaBV6aCmhtszQOL
 github.com/sfomuseum/iso8601duration v1.1.0 h1:kMYzbamrZp9dRxi5iFuhjl5CzHXK6s6Bzz/c75wsq8Q=
 github.com/sfomuseum/iso8601duration v1.1.0/go.mod h1:6EenGWM7y8uVquMPEZwoR+ihpIMJluw7iYiHhDTuOAk=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
-github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
-github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
+github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
+github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v2 v2.2.8 h1:obN1ZagJSUGI0Ek/LBmuj4SNLPfIny3KsKFopxRdj10=
 gopkg.in/yaml.v2 v2.2.8/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=

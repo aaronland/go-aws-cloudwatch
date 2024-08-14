@@ -3,7 +3,7 @@ module github.com/aaronland/go-aws-cloudwatch
 go 1.23
 
 require (
-	github.com/aaronland/go-aws-auth v1.6.2
+	github.com/aaronland/go-aws-auth v1.6.3
 	github.com/aws/aws-sdk-go-v2 v1.30.3
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.37.3
 	github.com/sfomuseum/go-flags v0.10.0
@@ -29,5 +29,4 @@ require (
 	github.com/aws/smithy-go v1.20.3 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
 )

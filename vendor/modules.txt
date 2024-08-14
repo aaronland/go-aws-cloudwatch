@@ -1,4 +1,4 @@
-# github.com/aaronland/go-aws-auth v1.6.2
+# github.com/aaronland/go-aws-auth v1.6.3
 ## explicit; go 1.22.1
 github.com/aaronland/go-aws-auth
 # github.com/aws/aws-sdk-go-v2 v1.30.3
@@ -134,5 +134,3 @@ github.com/sfomuseum/go-flags/multi
 # github.com/sfomuseum/iso8601duration v1.1.0
 ## explicit; go 1.18
 github.com/sfomuseum/iso8601duration
-# github.com/stretchr/testify v1.9.0
-## explicit; go 1.17
